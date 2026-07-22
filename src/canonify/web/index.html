@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Canonify Agent+ · Data Canonicalization</title>
+<style>
+  :root{
+    --bg:#0b1020; --panel:#141b2e; --panel2:#1b2540; --ink:#e8ecf5; --muted:#93a0bf;
+    --line:#26314f; --accept:#2ec27e; --review:#f5b301; --reject:#ef4b6b; --brand:#4f8bff;
+    --sensitive:#c084fc;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+       background:var(--bg);color:var(--ink)}
+  header{padding:18px 26px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;
+         background:linear-gradient(90deg,#101830,#0b1020)}
+  header .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#4f8bff,#7c4dff);
+       display:grid;place-items:center;font-weight:800;color:#fff}
+  header h1{font-size:17px;margin:0}
+  header .sub{color:var(--muted);font-size:12px}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:18px}
+  .row{display:flex;gap:14px;flex-wrap:wrap;align-items:end}
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+  input,select,button{font:inherit;color:var(--ink);background:var(--panel2);border:1px solid var(--line);
+       border-radius:9px;padding:9px 12px}
+  input[type=file]{padding:7px}
+  button{cursor:pointer;background:var(--brand);border:none;font-weight:600}
+  button.secondary{background:var(--panel2);border:1px solid var(--line)}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .stat{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .stat .n{font-size:24px;font-weight:800}
+  .stat .l{color:var(--muted);font-size:12px}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 14px}
+  .tab{padding:8px 13px;border-radius:9px;background:var(--panel2);border:1px solid var(--line);cursor:pointer;font-size:13px}
+  .tab.active{background:var(--brand);border-color:var(--brand)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+  .tablewrap{max-height:460px;overflow:auto;border:1px solid var(--line);border-radius:10px}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+  .ACCEPT{background:rgba(46,194,126,.16);color:var(--accept)}
+  .REVIEW{background:rgba(245,179,1,.16);color:var(--review)}
+  .REJECT{background:rgba(239,75,107,.16);color:var(--reject)}
+  .sens{background:rgba(192,132,252,.16);color:var(--sensitive)}
+  .bar{height:7px;border-radius:99px;background:var(--panel);overflow:hidden;min-width:70px}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#ef4b6b,#f5b301,#2ec27e)}
+  .muted{color:var(--muted)}
+  .hide{display:none}
+  .flag{background:rgba(239,75,107,.10);border:1px solid rgba(239,75,107,.35);border-radius:10px;padding:10px;margin-bottom:8px}
+  .note{font-size:12px;color:var(--muted);margin-top:4px}
+  code{background:#0d1428;padding:1px 5px;border-radius:5px}
+  .spin{width:16px;height:16px;border:2px solid #fff5;border-top-color:#fff;border-radius:50%;
+        display:inline-block;animation:s .7s linear infinite;vertical-align:-3px}
+  @keyframes s{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">C+</div>
+  <div>
+    <h1>Canonify Agent+</h1>
+    <div class="sub">Messy CSV / Excel &rarr; governed, auditable canonical data &middot; Mapper &rarr; Transformer &rarr; Judge &rarr; Persister</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <div class="row">
+      <div><label>Upload file (.csv .tsv .xlsx .xls)</label><input id="file" type="file" accept=".csv,.tsv,.txt,.xlsx,.xls"/></div>
+      <div><label>or load a bundled sample</label><select id="sample"><option value="">— choose —</option></select></div>
+      <div><label>Tenant</label><input id="tenant" value="acme" size="12"/></div>
+      <div><button id="go">Canonicalize</button></div>
+    </div>
+    <div class="note">Everything runs locally (stdlib engine). Gemini + Model Armor + BigQuery activate in <code>--mode gcp</code>.</div>
+    <div id="err" class="flag hide"></div>
+  </div>
+
+  <div id="results" class="hide">
+    <div class="card">
+      <div class="cards" id="stats"></div>
+      <div class="note" id="prep"></div>
+    </div>
+
+    <div class="card">
+      <div class="tabs" id="tabs"></div>
+      <div id="panel"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let DATA = null, TAB = 'data';
+
+async function loadSamples(){
+  const r = await fetch('/api/samples'); const j = await r.json();
+  const sel = $('#sample');
+  j.samples.filter(n=>!n.startsWith('_')).forEach(n=>{
+    const o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o);
+  });
+}
+function toB64(file){return new Promise((res,rej)=>{const fr=new FileReader();
+  fr.onload=()=>res(fr.result.split(',')[1]); fr.onerror=rej; fr.readAsDataURL(file);});}
+
+async function run(){
+  $('#err').classList.add('hide');
+  const tenant = $('#tenant').value.trim()||'global';
+  let filename, b64;
+  const f = $('#file').files[0];
+  if(f){ filename=f.name; b64=await toB64(f); }
+  else if($('#sample').value){
+    const r=await fetch('/api/sample?name='+encodeURIComponent($('#sample').value));
+    const j=await r.json(); filename=j.filename; b64=j.content_base64;
+  } else { showErr('Pick a file or a sample first.'); return; }
+
+  $('#go').innerHTML='<span class="spin"></span> Working'; $('#go').disabled=true;
+  try{
+    const r=await fetch('/api/canonicalize',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({filename,content_base64:b64,tenant})});
+    const j=await r.json();
+    if(!r.ok){ showErr(j.error||'Error'); return; }
+    DATA=j; render();
+  }catch(e){ showErr(e.message); }
+  finally{ $('#go').textContent='Canonicalize'; $('#go').disabled=false; }
+}
+function showErr(m){ $('#err').textContent='⚠ '+m; $('#err').classList.remove('hide'); }
+
+function stat(n,l,cls){return `<div class="stat"><div class="n ${cls||''}">${n}</div><div class="l">${l}</div></div>`;}
+function bar(c){const p=Math.round((c||0)*100);return `<div class="bar" title="${p}%"><i style="width:${p}%"></i></div>`;}
+
+function render(){
+  $('#results').classList.remove('hide');
+  const s=DATA.summary, d=s.decisions;
+  $('#stats').innerHTML =
+    stat(s.rows,'Canonical rows')+
+    stat(s.columns_mapped,'Columns mapped')+
+    stat(d.accept,'Accepted','ACCEPT')+
+    stat(d.review,'Needs review','REVIEW')+
+    stat(d.reject,'Rejected','REJECT')+
+    stat(s.security_flags,'Security flags', s.security_flags? 'REJECT':'');
+  const p=DATA.preprocess||{};
+  $('#prep').innerHTML = `Preprocess: header found at row <b>${p.header_row_index}</b> · `+
+    `dropped <b>${p.dropped_empty_rows||0}</b> empty rows, <b>${p.dropped_empty_columns||0}</b> empty cols · `+
+    `<b>${p.junk_rows_above_header||0}</b> junk rows above header · `+
+    `<b>${p.trailing_junk_rows_removed||0}</b> trailing junk rows removed.`;
+
+  const tabs=[['data','Canonical Data'],['audit','Mapping Audit'],['judge','Judge Decisions'],
+    ['review','Review Queue ('+DATA.review_queue.length+')'],['security','Security ('+DATA.security_flags.length+')']];
+  $('#tabs').innerHTML=tabs.map(([k,t])=>`<div class="tab ${k===TAB?'active':''}" data-k="${k}">${t}</div>`).join('');
+  document.querySelectorAll('.tab').forEach(el=>el.onclick=()=>{TAB=el.dataset.k;render();});
+  $('#panel').innerHTML=({data:panelData,audit:panelAudit,judge:panelJudge,
+    review:panelReview,security:panelSecurity})[TAB]();
+}
+
+function table(cols,rowsHtml){return `<div class="tablewrap"><table><thead><tr>`+
+  cols.map(c=>`<th>${c}</th>`).join('')+`</tr></thead><tbody>${rowsHtml}</tbody></table></div>`;}
+
+function panelData(){
+  const cols=DATA.columns; if(!cols.length) return '<p class="muted">No columns mapped.</p>';
+  const rows=DATA.canonical_rows.map(r=>'<tr>'+cols.map(c=>`<td>${r[c]??'<span class="muted">∅</span>'}</td>`).join('')+'</tr>').join('');
+  const dl=`<button class="secondary" onclick="downloadCsv()">⬇ Download canonical CSV</button>`;
+  return `<div style="margin-bottom:10px">${dl}</div>`+table(cols,rows);
+}
+function panelAudit(){
+  const rows=DATA.mappings.map(m=>`<tr>
+    <td>${m.canonical_column}${m.sensitive?' <span class="pill sens">sensitive</span>':''}</td>
+    <td>${(m.source_columns||[]).join(', ')}</td>
+    <td>${m.match_type}</td>
+    <td style="min-width:110px">${bar(m.confidence)}<span class="muted">${(m.confidence*100).toFixed(0)}%</span></td>
+    <td class="muted">${m.explanation||''}</td></tr>`).join('');
+  return table(['Canonical','Source column(s)','Match type','Confidence','Explanation'],rows);
+}
+function panelJudge(){
+  const rows=DATA.decisions.map(d=>`<tr>
+    <td>${d.target}</td><td>${d.kind}</td>
+    <td><span class="pill ${d.verdict}">${d.verdict}</span></td>
+    <td>${(d.confidence*100).toFixed(0)}% <span class="muted">/ thr ${(d.threshold_used*100).toFixed(0)}%</span></td>
+    <td class="muted">${d.reason||''}</td></tr>`).join('');
+  return table(['Target','Kind','Verdict','Confidence','Reason'],rows);
+}
+function panelReview(){
+  if(!DATA.review_queue.length) return '<p class="muted">Nothing needs review — clean run. ✅</p>';
+  return DATA.review_queue.map(q=>`<div class="flag" style="background:rgba(245,179,1,.08);border-color:rgba(245,179,1,.35)">
+    <b>${q.type}</b> ${q.canonical?('· '+q.canonical):''} ${q.location?('· '+q.location):''}
+    ${q.raw_value?('· raw: <code>'+q.raw_value+'</code>'):''}
+    <div class="note">${q.reason||q.verdict||q.issue||(q.reasons||[]).join('; ')||''}</div></div>`).join('');
+}
+function panelSecurity(){
+  if(!DATA.security_flags.length) return '<p class="muted">No prompt-injection / malicious content detected by Model Armor. 🛡️</p>';
+  return DATA.security_flags.map(f=>`<div class="flag">
+    <b>🛡️ ${(f.categories||[]).join(', ')}</b> · ${f.location}
+    <div class="note">preview: <code>${(f.value_preview||'').replace(/</g,'&lt;')}</code></div>
+    <div class="note">${(f.reasons||[]).join('; ')}</div></div>`).join('');
+}
+function downloadCsv(){
+  const blob=new Blob([DATA.canonical_csv],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='canonical_'+($('#tenant').value||'data')+'.csv'; a.click();
+}
+
+$('#go').onclick=run;
+loadSamples();
+</script>
+</body>
+</html>

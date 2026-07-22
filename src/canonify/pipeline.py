@@ -5,12 +5,13 @@ mode; only the injected backends (LLM, dictionary, sink) change.
 """
 from __future__ import annotations
 
-import csv
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from .config import Config, load_schema
+from .io_readers import read_grid
 from .models import PipelineResult
+from .preprocess import PreprocessReport, to_table
 from .rag.dictionary import get_dictionary
 from .rag.sop import SopRetriever
 from .llm.gemini import GeminiClient
@@ -20,12 +21,10 @@ from .agents.judge import JudgeAgent
 from .agents.persister import PersisterAgent
 
 
-def read_csv(path: Path) -> Tuple[List[str], List[Dict[str, str]]]:
-    with Path(path).open(newline="") as fh:
-        reader = csv.DictReader(fh)
-        headers = list(reader.fieldnames or [])
-        rows = [dict(r) for r in reader]
-    return headers, rows
+def load_table(path: Path) -> Tuple[List[str], List[Dict[str, str]], PreprocessReport]:
+    """Read ANY supported file (csv/tsv/xlsx/xls) and clean it into (headers, rows, report)."""
+    grid = read_grid(path)
+    return to_table(grid)
 
 
 def run_pipeline(input_path: Path, config: Optional[Config] = None,
@@ -42,7 +41,10 @@ def run_pipeline(input_path: Path, config: Optional[Config] = None,
     judge = JudgeAgent(schema)
     persister = PersisterAgent(config, dictionary)
 
-    headers, rows = read_csv(input_path)
+    headers, rows, preprocess_report = load_table(input_path)
+
+    # Model Armor pre-flight: screen untrusted input for prompt-injection before any agent runs.
+    security_flags = gemini.armor.scan_records(headers, rows)
 
     mappings = mapper.map_columns(headers)
     canonical_rows, transforms = transformer.transform(headers, rows, mappings)
@@ -58,7 +60,11 @@ def run_pipeline(input_path: Path, config: Optional[Config] = None,
         canonical_rows=canonical_rows,
         promoted_entries=promoted,
         review_queue=review_queue,
+        preprocess=preprocess_report.to_dict(),
+        security_flags=security_flags,
     )
+    # Security incidents also enter the human-review queue.
+    review_queue.extend(security_flags)
 
     paths = persister.write(result) if write else {}
     return result, paths

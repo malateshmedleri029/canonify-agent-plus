@@ -6,6 +6,10 @@
 Capstone Edition — Joint SWE + DS Agentic Data-Canonicalization Platform.
 Contacts: Balathasan Giritharan, Adrian Cartier.
 
+> **Want an AI to run it for you?** Open the repo in VS Code / Cursor / Visual Studio, select the
+> **Opus 4.8** model, and say: *"Read `RUN_WITH_OPUS.md` and run the entire project locally."*
+> See [`RUN_WITH_OPUS.md`](RUN_WITH_OPUS.md).
+
 ---
 
 ## The problem (in one line)
@@ -43,6 +47,13 @@ anywhere (laptop, CI, GitHub Copilot) with zero cloud cost, then flip `--mode gc
 # Canonicalize the messy sample roster
 PYTHONPATH=src python -m canonify run data/samples/new_to_old_bad.csv --tenant acme
 
+# Try the "worst-of-worst" samples (junk rows, Excel serial dates, prompt-injection cells)
+PYTHONPATH=src python -m canonify run data/samples/worst_case_messy.csv --tenant acme
+PYTHONPATH=src python -m canonify run data/samples/messy_roster.xlsx    --tenant acme
+
+# Launch the web UI (upload CSV/Excel, see mappings/decisions/security) → http://localhost:8000
+PYTHONPATH=src PORT=8000 python -m canonify.webapp
+
 # Inspect the review queue and the learned dictionary
 PYTHONPATH=src python -m canonify review --tenant acme
 PYTHONPATH=src python -m canonify dict   --tenant acme
@@ -50,6 +61,11 @@ PYTHONPATH=src python -m canonify dict   --tenant acme
 # Run the tests (stdlib unittest — zero installs)
 python -m unittest discover -s tests -v
 ```
+
+**Handles the worst data on the market:** wrong encodings/BOM, odd delimiters, title/junk rows above
+the header, blank rows & columns, merged/sparse cells, `N/A`/`#REF!`/`-` null tokens, duplicate/blank
+headers, Excel serial dates, trailing totals, and `Full Name`→`first/last` splits. Untrusted cells
+are screened for **prompt injection** by **GCP Model Armor** (with a local heuristic offline).
 
 Outputs land in `outputs/<tenant>/`:
 
@@ -86,15 +102,27 @@ Then drop a file and watch it canonicalize into BigQuery. Full guide:
 The target schema is **data, not code**. To support Use Case 2 (Insurance Claims), add a new
 `data/<name>_schema.json` and a matching SOP in `data/sop/` — no engine changes.
 
+## Docs
+
+- [`RUN_WITH_OPUS.md`](RUN_WITH_OPUS.md) — point Opus 4.8 at this to run everything locally.
+- [`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) — download, open in VS Code, run, extend.
+- [`docs/ARCHITECTURE_E2E.md`](docs/ARCHITECTURE_E2E.md) — the complete end-to-end diagrams.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/MVP_PLAN.md`](docs/MVP_PLAN.md) ·
+  [`docs/PROBLEM_STATEMENT.md`](docs/PROBLEM_STATEMENT.md) · [`docs/GCP_SETUP.md`](docs/GCP_SETUP.md).
+
 ## Repo layout
 
 ```
-src/canonify/      # engine: agents/, rag/, llm/, pipeline.py, cli.py, server.py
-data/              # canonical_schema.{json,yaml}, sop/, samples/
+src/canonify/
+  io_readers.py    # robust CSV + stdlib .xlsx readers
+  preprocess.py    # worst-of-worst cleanup + header detection
+  pipeline.py cli.py server.py webapp.py  web/index.html   # engine, CLI, Cloud Run, web UI
+  agents/          # mapper, transformer, judge, persister (+ *_gcp)
+  rag/  llm/       # dictionary + SOP RAG; gemini + model_armor (security)
+data/              # canonical_schema.{json,yaml}, sop/, samples/ (incl. messy + injection)
 tests/             # stdlib unittest suite
 infra/             # Terraform + bootstrap for GCP
-docs/              # problem statement, MVP plan, architecture, GCP setup
-.github/           # Copilot instructions + CI
+docs/  .vscode/  .github/   # docs, editor config, Copilot instructions + CI
 ```
 
 ## For GitHub Copilot users

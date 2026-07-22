@@ -60,6 +60,25 @@ class PipelineTests(unittest.TestCase):
             # ambiguous gender 'X'/'U' must be None (not guessed)
             self.assertIn(row.get("gender"), (None, "Male", "Female"))
 
+    def test_worst_case_csv_survives_junk(self):
+        result, _ = run_pipeline(SAMPLES / "worst_case_messy.csv", config=self.config)
+        self.assertEqual(len(result.canonical_rows), 5)  # junk/blank/total rows dropped
+        self.assertGreaterEqual(result.preprocess["junk_rows_above_header"], 1)
+        self.assertGreaterEqual(result.preprocess["dropped_empty_columns"], 1)
+        # Excel serial 44197 in a date column -> ISO 2021-01-01
+        self.assertTrue(any(r.get("date_of_birth") == "2021-01-01" for r in result.canonical_rows))
+
+    def test_excel_xlsx_end_to_end(self):
+        result, _ = run_pipeline(SAMPLES / "messy_roster.xlsx", config=self.config)
+        self.assertEqual(len(result.canonical_rows), 4)
+        self.assertEqual(result.canonical_rows[0]["first_name"], "John")
+        self.assertEqual(result.canonical_rows[0]["date_of_birth"], "1985-03-14")
+
+    def test_prompt_injection_flagged(self):
+        result, _ = run_pipeline(SAMPLES / "prompt_injection.csv", config=self.config)
+        self.assertGreaterEqual(len(result.security_flags), 2)
+        self.assertTrue(all(f["type"] == "security" for f in result.security_flags))
+
 
 if __name__ == "__main__":
     unittest.main()

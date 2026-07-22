@@ -1,4 +1,4 @@
-# Canonical schema for Use Case 1: Employee Benefits Administration.
+# Canonical schema for Use Case 1: ABC Benefits Administration.
 # This file is DATA, not code. Adding a new use case = adding a new schema file.
 #
 # field.type       : string | date | categorical | number
@@ -7,7 +7,7 @@
 # field.aliases    : known source-header spellings (seed dictionary)
 # field.enum       : allowed canonical values (categorical) with accepted source tokens
 
-schema_name: employee_benefits
+schema_name: abc_benefits
 version: 1
 
 thresholds:

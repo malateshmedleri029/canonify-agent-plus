@@ -1,7 +1,7 @@
-# SOP — Employee Benefits Roster Canonicalization
+# SOP — ABC Benefits Roster Canonicalization
 
 This Standard Operating Procedure is the grounding document retrieved by the Mapper and Transformer
-agents (via RAG) when canonicalizing an employee-benefits roster.
+agents (via RAG) when canonicalizing an ABC Benefits roster.
 
 ## Column mapping guidance
 - A single "Full Name" / "Name" / "Employee Name" column is typically `Last, First` and must be

@@ -78,6 +78,8 @@ class PersisterAgent:
             "judge_decision_log.json": result.judge_decision_log(),
             "promoted_dictionary_entries.json": result.promoted_dictionary_entries(),
             "review_queue.json": result.review_queue,
+            "security_flags.json": result.security_flags,
+            "preprocess_report.json": result.preprocess,
             "run_summary.json": result.summary(),
         }
         paths = {"mapped_data.csv": str(data_path)}

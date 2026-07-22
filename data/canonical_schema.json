@@ -1,5 +1,5 @@
 {
-  "schema_name": "employee_benefits",
+  "schema_name": "abc_benefits",
   "version": 1,
   "thresholds": {
     "accept": 0.85,

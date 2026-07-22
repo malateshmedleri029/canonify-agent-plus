@@ -62,7 +62,7 @@ gsutil cp data/samples/new_to_old_bad.csv gs://$RAW/acme/roster.csv
 
 Within seconds the Cloud Run service runs the pipeline in `gcp` mode and writes:
 
-- `canonify.canonical_employee_benefits` — mapped tabular data
+- `canonify.canonical_abc_benefits` — mapped tabular data
 - `canonify.mapping_audit_report`, `canonify.judge_decision_log`, `canonify.review_queue`
 - `canonify.learned_dictionary` — promoted mappings (accuracy compounds per tenant)
 

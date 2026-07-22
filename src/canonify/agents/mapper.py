@@ -42,6 +42,15 @@ class MapperAgent:
                 idx[normalize_header(a)] = f.name
         return idx
 
+    def _is_full_name(self, norm_header: str, full_name_norms: set) -> bool:
+        """Robustly recognize a full-name column even with prefixes (e.g. 'Emp Full Name')."""
+        if norm_header in full_name_norms:
+            return True
+        tokens = set(norm_header.split())
+        excluders = {"first", "last", "fname", "lname", "given", "sur", "surname",
+                     "user", "file", "company", "nick", "middle", "maiden"}
+        return "name" in tokens and not (tokens & excluders)
+
     def _best_fuzzy(self, norm_header: str) -> Tuple[Optional[str], float]:
         best_col, best_score = None, 0.0
         for f in self.schema.fields:
@@ -61,7 +70,7 @@ class MapperAgent:
             field = None
 
             # 3. Full-name column -> derived split into first/last.
-            if norm in full_name_norms:
+            if self._is_full_name(norm, full_name_norms):
                 for part, col in (("first", "first_name"), ("last", "last_name")):
                     f = self.schema.field_by_name(col)
                     mappings.append(ColumnMapping(

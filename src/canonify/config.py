@@ -60,6 +60,9 @@ class Config:
     gemini_model: str = "gemini-2.0-flash"
     bq_dataset: str = "canonify"
     featurestore_id: str = "canonify_dictionary"
+    # GCP Model Armor template resource name, e.g.
+    # projects/<p>/locations/<l>/templates/canonify-armor
+    model_armor_template: Optional[str] = None
 
     @classmethod
     def from_env(cls, **overrides: Any) -> "Config":
@@ -69,6 +72,7 @@ class Config:
             gcp_project=os.getenv("GOOGLE_CLOUD_PROJECT"),
             gcp_location=os.getenv("CANONIFY_LOCATION", "us-central1"),
             gemini_model=os.getenv("CANONIFY_GEMINI_MODEL", "gemini-2.0-flash"),
+            model_armor_template=os.getenv("CANONIFY_MODEL_ARMOR_TEMPLATE"),
         )
         for k, v in overrides.items():
             if v is not None:

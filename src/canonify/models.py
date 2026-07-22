@@ -85,6 +85,8 @@ class PipelineResult:
     canonical_rows: List[Dict[str, Any]] = field(default_factory=list)
     promoted_entries: List[Dict[str, Any]] = field(default_factory=list)
     review_queue: List[Dict[str, Any]] = field(default_factory=list)
+    preprocess: Dict[str, Any] = field(default_factory=dict)
+    security_flags: List[Dict[str, Any]] = field(default_factory=list)
 
     # --- the four required output artifacts ------------------------------------------------
     def mapping_audit_report(self) -> List[Dict[str, Any]]:
@@ -108,4 +110,6 @@ class PipelineResult:
             "decisions": {"accept": accepted, "review": review, "reject": reject},
             "review_queue_size": len(self.review_queue),
             "promoted": len(self.promoted_entries),
+            "security_flags": len(self.security_flags),
+            "preprocess": self.preprocess,
         }

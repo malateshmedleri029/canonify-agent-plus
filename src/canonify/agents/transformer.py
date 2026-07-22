@@ -10,7 +10,8 @@ Every transform carries a confidence + explanation. Ambiguous or sensitive edge 
 """
 from __future__ import annotations
 
-from datetime import datetime
+import re
+from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..config import CanonicalSchema, SchemaField
@@ -18,8 +19,9 @@ from ..models import CellTransform, ColumnMapping
 
 _DATE_FORMATS = [
     "%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d", "%Y/%m/%d",
-    "%d-%b-%Y", "%d-%B-%Y", "%d/%m/%Y", "%b %d, %Y",
+    "%d-%b-%Y", "%d-%B-%Y", "%d/%m/%Y", "%b %d, %Y", "%d.%m.%Y", "%Y.%m.%d",
 ]
+_EXCEL_EPOCH = datetime(1899, 12, 30)
 
 
 def _split_full_name(raw: str) -> Tuple[str, str]:
@@ -35,11 +37,19 @@ def _split_full_name(raw: str) -> Tuple[str, str]:
 
 def _parse_date(raw: str) -> Optional[str]:
     raw = (raw or "").strip()
+    if not raw:
+        return None
     for fmt in _DATE_FORMATS:
         try:
             return datetime.strptime(raw, fmt).strftime("%Y-%m-%d")
         except ValueError:
             continue
+    # Last resort: a bare Excel serial that slipped through as a number on a DATE column.
+    # Constrained to a plausible range (~1955-2079) so we never mangle IDs/zip codes.
+    if re.fullmatch(r"\d{5}", raw):
+        serial = int(raw)
+        if 20000 <= serial <= 60000:
+            return (_EXCEL_EPOCH + timedelta(days=serial)).strftime("%Y-%m-%d")
     return None
 
 

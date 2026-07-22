@@ -9,11 +9,14 @@ from __future__ import annotations
 import json
 from typing import Dict, List, Optional
 
+from .model_armor import ModelArmorClient
+
 
 class GeminiClient:
     def __init__(self, config):
         self.config = config
         self.enabled = config.mode == "gcp"
+        self.armor = ModelArmorClient(config)
         self._model = None
         if self.enabled:
             self._init_model()
@@ -27,6 +30,10 @@ class GeminiClient:
     def _json_call(self, prompt: str) -> Optional[Dict]:  # pragma: no cover - GCP path
         if not self.enabled or self._model is None:
             return None
+        # Model Armor: screen the (untrusted-data-bearing) prompt BEFORE sending to Gemini.
+        pre = self.armor.screen_prompt(prompt)
+        if pre.blocked:
+            return None  # fall back to the deterministic engine; incident is flagged upstream
         from vertexai.generative_models import GenerationConfig
         resp = self._model.generate_content(
             prompt,
@@ -35,8 +42,16 @@ class GeminiClient:
             ),
         )
         try:
-            return json.loads(resp.text)
-        except (ValueError, AttributeError):
+            text = resp.text
+        except AttributeError:
+            return None
+        # Model Armor: screen the model's response before trusting it.
+        post = self.armor.screen_response(text)
+        if post.blocked:
+            return None
+        try:
+            return json.loads(text)
+        except ValueError:
             return None
 
     def propose_mapping(self, source_header: str, candidates: List[str],

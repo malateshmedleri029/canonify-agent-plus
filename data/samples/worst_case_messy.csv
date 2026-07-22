@@ -1,0 +1,12 @@
+XYZ - Confidential ABC Benefits Export,,,,,,
+Report generated on 2026-07-21 by legacy system v2,,,,,,
+,,,,,,
+Emp Full Name ,DoB ,Gender (M/F),Reln,SSN #,,E-mail Address
+"  Smith,  John ",03/14/1985,M,Employee,123-45-6789,,JOHN.SMITH@EXAMPLE.COM
+"Doe, Jane",7/22/90,F,Spouse,987-65-4321,,jane.doe@example.com
+,,,,,,
+"Lee, Sam",44197,1,Child,N/A,,#REF!
+"Nguyen, Kim ",22-Aug-1978,female,self,555-12-3456,,kim@example.com
+"Garcia, Alex",02/30/1988,X,dep,222-33-4444,,
+Total,,,,,,
+Notes: rows exported from mainframe,,,,,,

@@ -54,7 +54,7 @@ A payload (messy file) goes in; the platform produces, **automatically and audit
 
 ## 6. Target use cases (from the brief)
 
-1. **Employee Benefits Administration** — process a raw roster of family members and update
+1. **ABC Benefits Administration** — process a raw roster of family members and update
    demographic information for benefits.
 2. **Insurance Claims Processing** — ingest a list of damaged assets and transform into a
    standardized claims-severity schema.

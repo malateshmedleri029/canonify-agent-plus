@@ -41,6 +41,10 @@ Always keep `python -m unittest discover -s tests` green before finishing a chan
 |---|---|
 | `src/canonify/models.py` | Dataclass contracts (ColumnMapping, CellTransform, JudgeDecision, PipelineResult). |
 | `src/canonify/config.py` | Config + canonical-schema loading (JSON default; YAML if PyYAML present). |
+| `src/canonify/io_readers.py` | Robust CSV + pure-stdlib `.xlsx` readers → raw grid. |
+| `src/canonify/preprocess.py` | Worst-of-worst cleanup + real-header detection → (headers, rows, report). |
+| `src/canonify/llm/model_armor.py` | GCP Model Armor screening (+ local injection/PII heuristic). |
+| `src/canonify/webapp.py` + `web/index.html` | Stdlib web UI + JSON API (upload CSV/Excel). |
 | `src/canonify/agents/mapper.py` | Column → canonical mapping (dict/alias/fuzzy/Gemini). |
 | `src/canonify/agents/transformer.py` | Cell transforms (name split, gender, dates). |
 | `src/canonify/agents/judge.py` | Confidence-threshold governance gate. |
