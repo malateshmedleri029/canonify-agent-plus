@@ -13,9 +13,10 @@ Studio. The core runs on the **Python standard library**, so local development n
 
 ## 2. Get the code
 ```bash
-git clone <your-repo-url> canonify
-cd canonify
+git clone https://github.com/malateshmedleri029/canonify-agent-plus.git
+cd canonify-agent-plus
 ```
+In VS Code / Cursor you can also use `Cmd/Ctrl+Shift+P` → **Git: Clone** and paste the URL above.
 
 ## 3. Open in your editor
 - **VS Code / Cursor:** `code .` (or *File → Open Folder*). Accept the recommended extensions prompt
@@ -89,5 +90,48 @@ docs/               # problem statement, MVP plan, architecture (+ E2E), GCP set
 - **Always:** every mapping/transform must carry a confidence + explanation, and sensitive fields
   must never be silently inferred. Keep the core stdlib-only. Run the tests before finishing.
 
-## 10. Deploy to GCP (optional)
+## 10. Push your changes to GitHub
+
+The repo lives at **https://github.com/malateshmedleri029/canonify-agent-plus**.
+
+### First-time setup (authentication — pick ONE)
+- **Cursor / VS Code (easiest):** connect your GitHub account in the editor, then use the
+  **Source Control** panel (⌃⇧G) — *Commit* → *Sync/Push*. The editor handles auth.
+- **GitHub CLI:** `brew install gh && gh auth login` (once). Future pushes just work.
+- **Personal Access Token:** create one at <https://github.com/settings/tokens> with the `repo`
+  scope; the first `git push` will prompt for it (username = your GitHub handle, password = token).
+  On macOS it's then cached in the keychain.
+
+### The everyday loop
+```bash
+# 1. work on a branch (don't commit straight to main for shared repos)
+git checkout -b feature/my-change
+
+# 2. ALWAYS run the tests before committing
+python3 -m unittest discover -s tests
+
+# 3. stage + commit
+git add -A
+git commit -m "feat: describe what you changed"
+
+# 4. push the branch
+git push -u origin feature/my-change
+
+# 5. open a Pull Request (from the link git prints, or on GitHub) and let CI run
+```
+
+Pushing to `main` directly (if you have rights):
+```bash
+git checkout main && git pull   # sync first
+git add -A && git commit -m "your message" && git push
+```
+
+### Notes
+- CI (`.github/workflows/ci.yml`) runs the test suite on every push/PR across Python 3.9/3.11/3.12.
+- `.gitignore` already excludes `outputs/`, `data/dictionary/`, and Terraform state — never force-add
+  them. Never commit secrets or a `.env`.
+- If `git push` says *"Repository not found"*, the remote/repo name is wrong or you're not
+  authenticated — re-check `git remote -v` and your auth method above.
+
+## 11. Deploy to GCP (optional)
 See [`GCP_SETUP.md`](./GCP_SETUP.md). One command: `./infra/scripts/gcp_bootstrap.sh`.
