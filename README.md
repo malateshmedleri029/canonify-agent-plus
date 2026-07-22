@@ -102,13 +102,36 @@ Then drop a file and watch it canonicalize into BigQuery. Full guide:
 The target schema is **data, not code**. To support Use Case 2 (Insurance Claims), add a new
 `data/<name>_schema.json` and a matching SOP in `data/sop/` — no engine changes.
 
-## Docs
+## Documentation
 
-- [`RUN_WITH_OPUS.md`](RUN_WITH_OPUS.md) — point Opus 4.8 at this to run everything locally.
-- [`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) — download, open in VS Code, run, extend.
-- [`docs/ARCHITECTURE_E2E.md`](docs/ARCHITECTURE_E2E.md) — the complete end-to-end diagrams.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · [`docs/MVP_PLAN.md`](docs/MVP_PLAN.md) ·
-  [`docs/PROBLEM_STATEMENT.md`](docs/PROBLEM_STATEMENT.md) · [`docs/GCP_SETUP.md`](docs/GCP_SETUP.md).
+Everything you need, grouped by intent:
+
+### Run it
+| Doc | What it's for |
+|---|---|
+| [`RUN_WITH_OPUS.md`](RUN_WITH_OPUS.md) | Point **Opus 4.8** at this to run the whole project locally, autonomously. |
+| [`docs/DEVELOPER_GUIDE.md`](docs/DEVELOPER_GUIDE.md) | Human step-by-step: clone → open in VS Code → run → **push to GitHub** → extend. |
+
+### Understand it
+| Doc | What it's for |
+|---|---|
+| [`docs/PROBLEM_STATEMENT.md`](docs/PROBLEM_STATEMENT.md) | The problem, reiterated: what "messy → canonical" means and why. |
+| [`docs/MVP_PLAN.md`](docs/MVP_PLAN.md) | Scope, milestones, success metrics, risks. |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Core design: agentic loop, components, confidence/governance model. |
+| [`docs/ARCHITECTURE_E2E.md`](docs/ARCHITECTURE_E2E.md) | The complete end-to-end diagrams (context, flow, robustness, security, deployment). |
+
+### Ship it
+| Doc | What it's for |
+|---|---|
+| [`docs/GCP_SETUP.md`](docs/GCP_SETUP.md) | Deploy on GCP (Cloud Run + Eventarc + Gemini + Model Armor + BigQuery). |
+| [`infra/`](infra/) | Terraform + `gcp_bootstrap.sh` bootstrap script. |
+
+### Contribute / AI-assist
+| Doc | What it's for |
+|---|---|
+| [`.github/copilot-instructions.md`](.github/copilot-instructions.md) | Repo conventions auto-read by Copilot / Cursor. |
+| [`.github/workflows/ci.yml`](.github/workflows/ci.yml) | CI: runs the test suite on Python 3.9 / 3.11 / 3.12. |
+| [`.vscode/`](.vscode/) | Ready-made VS Code run/debug configs + tasks. |
 
 ## Repo layout
 
