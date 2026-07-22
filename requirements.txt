@@ -1,0 +1,7 @@
+# Core runtime: NONE. The canonicalization engine runs on the Python standard library.
+# Install the package itself (editable) for the `canonify` CLI:
+#     pip install -e .
+#
+# Optional extras:
+#     pip install -e ".[dev]"   # pyyaml + pytest for authoring/analysis
+#     pip install -e ".[gcp]"   # Vertex AI Gemini + BigQuery + Storage for --mode gcp

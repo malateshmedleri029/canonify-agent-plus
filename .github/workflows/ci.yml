@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      # Core is stdlib-only: no install needed to test.
+      - name: Run tests (stdlib unittest)
+        run: python -m unittest discover -s tests -v
+      - name: Smoke-test the CLI
+        run: |
+          PYTHONPATH=src python -m canonify run data/samples/new_to_old_bad.csv --tenant ci
+          PYTHONPATH=src python -m canonify run data/samples/ambiguous_hard.csv --tenant ci

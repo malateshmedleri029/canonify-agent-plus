@@ -1,0 +1,6 @@
+Full Name,DoB,Sex,Rel,SSN,Contact Email
+"Smith, John",03/14/1985,M,Employee,123-45-6789,john.smith@example.com
+"Doe, Jane",1990-07-22,F,Spouse,987-65-4321,jane.doe@example.com
+"Lee, Sam",12/01/2015,1,Child,,sam.lee@example.com
+"Nguyen, Kim",22-Aug-1978,female,Self,555-12-3456,kim.nguyen@example.com
+"Garcia, Alex",1988/02/29,0,dep,222-33-4444,

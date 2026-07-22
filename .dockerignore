@@ -1,0 +1,11 @@
+.git
+.venv
+venv
+__pycache__
+*.pyc
+outputs/
+data/dictionary/
+infra/terraform/.terraform
+tests/
+docs/
+.github/

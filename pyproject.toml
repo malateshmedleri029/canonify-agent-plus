@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "canonify-agent"
+version = "0.1.0"
+description = "Canonify Agent+ — governed, multi-agent data-canonicalization platform on GCP."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Balathasan Giritharan" },
+  { name = "Adrian Cartier" },
+]
+# Core has ZERO runtime dependencies — it runs on the standard library alone.
+dependencies = []
+
+[project.optional-dependencies]
+# GCP power-ups (only needed for `--mode gcp`).
+gcp = [
+  "google-cloud-aiplatform>=1.60",
+  "google-cloud-bigquery>=3.20",
+  "google-cloud-storage>=2.16",
+]
+# Nice-to-haves for authoring/analysis.
+dev = [
+  "pyyaml>=6.0",
+  "pytest>=8.0",
+]
+
+[project.scripts]
+canonify = "canonify.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

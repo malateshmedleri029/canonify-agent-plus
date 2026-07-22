@@ -1,0 +1,73 @@
+# Canonical schema for Use Case 1: Employee Benefits Administration.
+# This file is DATA, not code. Adding a new use case = adding a new schema file.
+#
+# field.type       : string | date | categorical | number
+# field.required   : must be present after mapping (else flagged)
+# field.sensitive  : inferences require higher confidence + human confirmation
+# field.aliases    : known source-header spellings (seed dictionary)
+# field.enum       : allowed canonical values (categorical) with accepted source tokens
+
+schema_name: employee_benefits
+version: 1
+
+thresholds:
+  accept: 0.85        # >= accept  -> AUTO-ACCEPT
+  review: 0.60        # >= review  -> REVIEW (human queue); below -> REJECT
+  sensitive_bonus: 0.10  # sensitive fields need accept + this margin
+
+fields:
+  - name: first_name
+    type: string
+    required: true
+    sensitive: false
+    aliases: ["first name", "fname", "fn", "given name", "givenname", "first"]
+    derive_from: full_name        # can be split out of a full-name column
+    derive_part: first
+
+  - name: last_name
+    type: string
+    required: true
+    sensitive: false
+    aliases: ["last name", "lname", "ln", "surname", "family name", "last", "last nm"]
+    derive_from: full_name
+    derive_part: last
+
+  - name: date_of_birth
+    type: date
+    required: true
+    sensitive: true
+    aliases: ["date of birth", "dob", "dateofbirth", "birth date", "birthdate", "d.o.b"]
+
+  - name: gender
+    type: categorical
+    required: true
+    sensitive: true
+    aliases: ["gender", "sex", "gndr", "gen"]
+    enum:
+      Male: ["m", "male", "1", "man", "boy"]
+      Female: ["f", "female", "0", "woman", "girl"]
+
+  - name: relationship
+    type: categorical
+    required: false
+    sensitive: false
+    aliases: ["relationship", "rel", "relation", "dependent type", "reln"]
+    enum:
+      Self: ["self", "employee", "ee", "subscriber"]
+      Spouse: ["spouse", "husband", "wife", "sp"]
+      Child: ["child", "son", "daughter", "dependent", "dep", "kid"]
+
+  - name: ssn
+    type: string
+    required: false
+    sensitive: true
+    aliases: ["ssn", "social security number", "social security", "tax id", "tin"]
+
+  - name: email
+    type: string
+    required: false
+    sensitive: false
+    aliases: ["email", "e-mail", "email address", "mail", "contact email"]
+
+# A full-name source column is recognized by these aliases and split into first/last.
+full_name_aliases: ["full name", "name", "employee name", "member name", "fullname"]
